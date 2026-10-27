@@ -1,0 +1,6 @@
+# Personal journal entries (daily-five) — never commit
+journal/
+# OS / editor noise
+.DS_Store
+__pycache__/
+*.pyc

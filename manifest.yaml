@@ -1,0 +1,238 @@
+# Machine-readable index of the practices.
+# Validated by scripts/validate.py. Paths are relative to the repo root.
+# activation:      auto     = apply silently when applies_when matches
+#                  offer    = offer in one line, once per session; apply only on yes
+#                  explicit = apply only when the user asks
+#                  (an explicit request always applies, after the crisis check)
+# evidence_level:  moderate | moderate-low | low | tradition
+# Practices run in the user's own language; protocols and triggers are written in English.
+schema_version: 2
+repo: conscious-practices
+url: https://github.com/VasiniDevi/conscious-practices
+license: MIT
+language: en
+safety: safety/crisis.md
+research:
+  verification: research/verification.md
+  existing_workflows: research/existing-workflows.md
+
+# Applied automatically ONLY to personal / emotional / decision conversations — not to every chat.
+session_defaults:
+  applies_when: ["conversation is personal, emotional, or about a decision that matters to the user's life"]
+  does_not_apply_when: ["work or analytical task", "pure execution request", "factual lookup", "learning session (tutor-not-author has its own frame)", "crisis signal"]
+  practices: [anti-sycophancy, timebox-exit-signal, conversation-to-action]
+  prompts:
+    en: prompts/system/session-defaults.en.md
+
+practices:
+  - id: socratic-reappraisal
+    number: 1
+    name: Socratic reappraisal
+    summary: One question at a time (evidence for, evidence against, alternative, friend test) until the user rewrites the thought themselves.
+    activation: offer
+    applies_when:
+      - "user states a specific thought or belief that distresses them and could be examined (e.g. 'I'm going to get fired', 'I always ruin things')"
+      - "user explicitly asks to question or examine a thought"
+    does_not_apply_when:
+      - "venting without a target thought"
+      - "user wants practical problem-solving or information"
+      - "the thought describes a real, current danger"
+      - "acute grief or shock"
+      - "user declined the offer"
+      - "crisis signal (go to safety/crisis.md)"
+    triggers: ["a thought keeps bothering me", "help me question this thought", "I keep thinking that", "examine a belief"]
+    duration_minutes: [10, 20]
+    inputs: ["one worrying thought in one sentence", "belief rating 0-100"]
+    exit_condition: "User formulates a new version of the thought and re-rates the original; or all four question types are covered with no change; or about 12 user turns."
+    closing: conversation-to-action
+    composes_with: [anti-sycophancy, timebox-exit-signal, conversation-to-action]
+    skill: skills/socratic-reappraisal/SKILL.md
+    prompts:
+      en: prompts/socratic-reappraisal.en.md
+    evidence_level: moderate-low
+    verdict: confirmed
+    sources:
+      - "Held et al. 2024, JMIR Res Protoc 13:e58195, doi:10.2196/58195"
+      - "Held et al. 2025, JMIR Ment Health 12:e80461, doi:10.2196/80461"
+
+  - id: anti-sycophancy
+    number: 2
+    name: Anti-sycophancy setting
+    summary: Restate claims as neutral questions, name the weak spot first, no praise, voice the other party, hold position without new evidence.
+    activation: auto
+    applies_when:
+      - "user asserts a claim (about self, others, or the world) that their request depends on"
+      - "user asks for evaluation of their idea, plan, code, text, or argument"
+      - "user makes or announces a decision"
+      - "user pushes back without new evidence"
+    does_not_apply_when:
+      - "pure execution request ('just write the code', 'translate this', 'format this')"
+      - "factual lookup"
+      - "user said 'just execute' (raise a concern in one line only if it would break the work)"
+      - "crisis signal (never challenge; go to safety/crisis.md)"
+    variants:
+      personal: prompts/system/anti-sycophancy.en.md
+      work: vendor/anti-sycophancy-prompt/prompt.md
+    variant_rule: "personal/emotional/decision context -> personal; work/analytical context -> work. Chosen by the agent from context, not by the user."
+    triggers: ["don't just agree with me", "tell me honestly", "am I right that", "what do you think of my plan", "review my code/text"]
+    duration_minutes: [0, 0]
+    inputs: []
+    exit_condition: "Standing behaviour while its applies_when conditions hold; ends when the user turns it off."
+    closing: none
+    composes_with: [socratic-reappraisal, daily-five, tutor-not-author, conversation-to-action, timebox-exit-signal, stoic-evening-review]
+    skill: skills/anti-sycophancy/SKILL.md
+    prompts:
+      en: prompts/system/anti-sycophancy.en.md
+    evidence_level: moderate
+    verdict: "confirmed (AISI); partially confirmed (Stanford 49% = affirming users' actions in interpersonal advice)"
+    sources:
+      - "Dubois, Ududec, Summerfield, Luettgau 2026, arXiv:2602.23971"
+      - "Cheng et al. 2026, Science 391(6792), doi:10.1126/science.aec8352"
+
+  - id: daily-five
+    number: 3
+    name: Daily 5
+    summary: Five minutes of free writing, then three recurring themes over two weeks (grounded in dated quotes) and one question with no ready answer.
+    activation: offer
+    applies_when:
+      - "user starts free-writing or dumping thoughts unprompted"
+      - "user says they want to journal"
+      - "user asks what patterns keep recurring in their life over recent weeks"
+    does_not_apply_when:
+      - "a one-off rant about a single event"
+      - "no access to past entries and the user won't paste any (offer the writing part only)"
+      - "user wants advice now"
+      - "user declined the offer"
+      - "crisis signal"
+    triggers: ["journal", "brain dump", "daily 5", "what themes keep coming up"]
+    duration_minutes: [5, 10]
+    inputs: ["today's free writing", "entries from the previous 13 days (memory, pasted, or journal/)"]
+    exit_condition: "One question asked, then stop."
+    closing: optional
+    composes_with: [anti-sycophancy, conversation-to-action]
+    skill: skills/daily-five/SKILL.md
+    prompts:
+      en: prompts/daily-five.en.md
+    evidence_level: low
+    verdict: "partially confirmed (feature exists in Rosebud/Mindsera; no efficacy evidence)"
+    sources:
+      - "Rosebud, https://www.rosebud.app (product)"
+      - "Mindsera, https://www.mindsera.com (product)"
+      - "Nepal et al. 2024, Proc ACM IMWUT, doi:10.1145/3699761"
+
+  - id: tutor-not-author
+    number: 4
+    name: Tutor, not author
+    summary: No solutions; ask for the user's approach, locate errors without fixing them, graded hints only after the second failed attempt.
+    activation: auto
+    applies_when:
+      - "user signals learning intent ('help me understand', 'I'm studying for', 'I want to learn to', 'explain but let me do it', 'check my attempt')"
+      - "homework or exercise framed as practice"
+    does_not_apply_when:
+      - "'just write the code' / 'just give me the answer'"
+      - "production work, deadlines, or delegation"
+      - "user is an expert asking for execution"
+      - "user said 'author mode'"
+    triggers: ["don't solve it for me", "tutor mode", "help me learn", "I want to write it myself"]
+    duration_minutes: [15, 45]
+    inputs: ["the task", "what the user already tried"]
+    exit_condition: "User solves it and explains the key idea; or says 'author mode'; or about 45 minutes."
+    closing: optional
+    composes_with: [anti-sycophancy]
+    skill: skills/tutor-not-author/SKILL.md
+    prompts:
+      en: prompts/tutor-not-author.en.md
+    evidence_level: moderate
+    verdict: "confirmed (Kestin RCT; Kosmyna preprint) but two separate studies, not 'the MIT study'; second-attempt hint rule not in source"
+    sources:
+      - "Kestin et al. 2025, Sci Rep 15:17458, doi:10.1038/s41598-025-97652-6"
+      - "Kosmyna et al. 2025, arXiv:2506.08872 (preprint)"
+
+  - id: conversation-to-action
+    number: 5
+    name: Conversation to action
+    summary: End a personal conversation with one concrete physical action for today, phrased as when/where/what; no dependence hooks.
+    activation: auto
+    applies_when:
+      - "end of a personal or emotional conversation"
+      - "user signals closure ('thanks, I feel better', 'ok, what now?')"
+      - "offer: a decision conversation ends without any next step"
+    does_not_apply_when:
+      - "work or task chats"
+      - "short factual chats"
+      - "user declined"
+      - "crisis signal (the action becomes reaching a person, per safety/crisis.md)"
+    triggers: ["what now", "let's wrap up", "I feel better", "thanks, that helped"]
+    duration_minutes: [1, 3]
+    inputs: ["the conversation so far"]
+    exit_condition: "Plan restated in one line, or the user declined."
+    closing: self
+    composes_with: [anti-sycophancy, timebox-exit-signal, socratic-reappraisal, daily-five, stoic-evening-review]
+    skill: skills/conversation-to-action/SKILL.md
+    prompts:
+      en: prompts/conversation-to-action.en.md
+    evidence_level: moderate-low
+    verdict: "partially confirmed / not found (Ebb suggests activities; 'always end with physical action' and dependence claim not documented)"
+    sources:
+      - "Headspace Ebb, https://www.headspace.com/ebb (product)"
+      - "De Freitas, Oguz-Uguralp, Kaan-Uguralp 2025, arXiv:2508.19258"
+      - "Gollwitzer & Sheeran 2006, Adv Exp Soc Psychol 38:69-119"
+
+  - id: timebox-exit-signal
+    number: 6
+    name: Time frame and exit signal
+    summary: 20-minute frame; flag going in circles and topics that need a live human, and say who to turn to.
+    activation: auto
+    applies_when:
+      - "personal, emotional, or decision conversation (part of session defaults)"
+      - "any chat: the same worry or question returns a third time without new information (circling detector only)"
+      - "user asks for a time limit"
+    does_not_apply_when:
+      - "task-focused work chats without looping"
+      - "factual lookups"
+      - "tutoring (own 45-minute frame)"
+      - "user declines a time limit"
+      - "crisis signal (safety overrides)"
+    triggers: ["set a time limit", "am I going in circles", "this is taking too long"]
+    duration_minutes: [20, 20]
+    inputs: ["optional custom duration"]
+    exit_condition: "Time up; or circling signal; or live-human signal; then conversation-to-action."
+    closing: conversation-to-action
+    composes_with: [anti-sycophancy, conversation-to-action, socratic-reappraisal, daily-five, stoic-evening-review]
+    skill: skills/timebox-exit-signal/SKILL.md
+    prompts:
+      en: prompts/timebox-exit-signal.en.md
+    evidence_level: moderate-low
+    verdict: "partially confirmed (total daily usage correlates with loneliness/dependence; personal topics mixed; 20 min is a convention)"
+    sources:
+      - "Fang et al. 2025, arXiv:2503.17473"
+      - "Phang et al. 2025, arXiv:2504.03888"
+
+  - id: stoic-evening-review
+    number: 7
+    name: Stoic evening review
+    summary: Three questions one at a time (where I went wrong, what I did, what I left undone), no praise, mark self-justifications, one line for tomorrow.
+    activation: offer
+    applies_when:
+      - "end of the day and the user reflects on how the day went or on what they did or didn't do"
+      - "user explicitly asks for an evening review"
+    does_not_apply_when:
+      - "user needs comfort after a hard event (acute)"
+      - "shame spiral or harsh global self-criticism ('I'm worthless')"
+      - "user wants to vent"
+      - "user declined the offer"
+      - "crisis signal"
+    triggers: ["evening review", "review my day", "stoic reflection", "Seneca's questions"]
+    duration_minutes: [5, 10]
+    inputs: ["the user's day"]
+    exit_condition: "Carry-forward line for tomorrow restated."
+    closing: self
+    composes_with: [anti-sycophancy]
+    skill: skills/stoic-evening-review/SKILL.md
+    prompts:
+      en: prompts/stoic-evening-review.en.md
+    evidence_level: tradition
+    verdict: "misattributed (Golden Verses via Epictetus Discourses 3.10, not Seneca; Seneca De Ira III.36 has Sextius's questions)"
+    sources:
+      - "Epictetus, Discourses 3.10.2-3 (Long tr., public domain)"
+      - "Seneca, De Ira III.36"
